@@ -9,6 +9,18 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        @keyframes slideInBounce {
+            0% { 
+                opacity: 0; 
+                transform: translateX(-100%) scale(0.8); 
+            }
+            60% { 
+                transform: translateX(10%) scale(1.05); 
+            }
+            100% { 
+                opacity: 1; 
+                transform: translateX(0) scale(1); 
+            }
         }
 
         body {
@@ -436,18 +448,62 @@
             box-shadow: 0 5px 15px rgba(255, 107, 107, 0.1);
         }
 
-        @keyframes slideInBounce {
-            0% { 
-                opacity: 0; 
-                transform: translateX(-100%) scale(0.8); 
-            }
-            60% { 
-                transform: translateX(10%) scale(1.05); 
-            }
-            100% { 
-                opacity: 1; 
-                transform: translateX(0) scale(1); 
-            }
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            animation: scaleIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes scaleIn {
+            0% { transform: scale(0.7); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+        }
+
+        .modal p {
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .modal-buttons .btn {
+            margin: 0;
+            min-width: 100px;
         }
 
         .progress-bar {
@@ -493,8 +549,8 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-primary" onclick="loadStudents()">🔄 Refresh List</button>
-                <button class="btn btn-secondary" onclick="clearDatabase()">🗑️ Clear Database</button>
+                <button class="btn btn-primary" onclick="refreshStudents()">🔄 Refresh List</button>
+                <button class="btn btn-secondary" onclick="showClearModal()">🗑️ Clear Database</button>
                 
                 <div id="students-container" class="students-grid">
                     <!-- Students will be loaded here -->
@@ -533,6 +589,18 @@
                     <div id="bulk-form-container"></div>
                     <div id="progress-container"></div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Modal -->
+    <div id="clearModal" class="modal">
+        <div class="modal-content">
+            <h3>⚠️ Clear Database</h3>
+            <p>Are you sure you want to clear all students? This action cannot be undone.</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" onclick="hideClearModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmClearDatabase()">Clear All</button>
             </div>
         </div>
     </div>
@@ -599,10 +667,17 @@
         }
 
         function updateStats() {
-            document.getElementById('total-students').textContent = students.length;
+            const totalStudents = students.length;
+            document.getElementById('total-students').textContent = totalStudents;
+            
             const lastStudent = students[students.length - 1];
-            document.getElementById('last-added').textContent = 
-                lastStudent ? `${lastStudent.name} ${lastStudent.lastname}` : '-';
+            const lastAddedElement = document.getElementById('last-added');
+            
+            if (totalStudents === 0) {
+                lastAddedElement.textContent = '-';
+            } else {
+                lastAddedElement.textContent = `${lastStudent.name} ${lastStudent.lastname}`;
+            }
         }
 
         function loadStudents() {
@@ -728,13 +803,32 @@
             document.getElementById('bulk-form-container').innerHTML = '';
         }
 
+        function refreshStudents() {
+            console.log('Refreshing student list...');
+            loadStudents();
+            showNotification('Student list refreshed!');
+        }
+
+        function showClearModal() {
+            document.getElementById('clearModal').classList.add('show');
+        }
+
+        function hideClearModal() {
+            document.getElementById('clearModal').classList.remove('show');
+        }
+
+        function confirmClearDatabase() {
+            students = [];
+            nextId = 1;
+            updateStats(); // Update stats first to show 0 students
+            loadStudents(); // Then reload the display
+            hideClearModal(); // Hide the modal
+            showNotification('Database cleared successfully!');
+        }
+
         function clearDatabase() {
-            if (confirm('Are you sure you want to clear all students? This action cannot be undone.')) {
-                students = [];
-                nextId = 1;
-                loadStudents();
-                showNotification('Database cleared successfully!');
-            }
+            // This function is now replaced by the modal system
+            showClearModal();
         }
 
         // Event listeners - removed form event listener since we're using buttons now
